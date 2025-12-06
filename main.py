@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from loguru import logger
 from config.settings import settings
-from handlers import start, help
+from handlers import start, help, menu, orders, admin, callbacks, edit_order, statistics
 from database.database import init_db
 from pathlib import Path
 
@@ -37,6 +37,12 @@ async def main():
     logger.info("Регистрация роутеров...")
     dp.include_router(start.router)
     dp.include_router(help.router)
+    dp.include_router(callbacks.router)
+    dp.include_router(menu.router)
+    dp.include_router(orders.router)
+    dp.include_router(edit_order.router)
+    dp.include_router(statistics.router)
+    dp.include_router(admin.router)
     logger.info("✅ Все роутеры зарегистрированы")
     
     logger.info("Инициализация базы данных...")
