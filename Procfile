@@ -1,0 +1,10 @@
+worker: python main.py
+
+
+
+
+
+
+
+
+
