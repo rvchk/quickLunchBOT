@@ -18,7 +18,3 @@ class Dish(Base):
     menu_items = relationship("Menu", back_populates="dish")
     cafe_menu_items = relationship("CafeMenu", back_populates="dish")
 
-
-
-
-

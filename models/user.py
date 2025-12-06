@@ -23,5 +23,3 @@ class User(Base):
     office = relationship("Office", back_populates="users")
     orders = relationship("Order", back_populates="user")
 
-
-
