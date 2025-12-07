@@ -8,12 +8,13 @@ from database.database import get_session
 from services.user_service import get_or_create_user
 from services.office_service import get_all_offices
 from services.cafe_service import get_all_cafes, get_cafe_menu_for_date
-from services.cafe_service import get_cafe_by_id
+from services.cafe_service import get_cafe_by_id, get_cafe_menu_item
 from services.deadline_service import get_deadline_for_date
 from utils.formatters import format_date
 from utils.validators import validate_order_date
 from config.settings import settings
 from models.order import DeliveryType
+from services.menu_management_service import get_dish_by_id
 
 router = Router()
 
@@ -406,7 +407,16 @@ async def callback_choose_dish(callback: CallbackQuery, state: FSMContext):
                 already_in_cart = item["quantity"]
                 break
         
-        menu_item_check = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await callback.answer("Ошибка: кафе не выбрано", show_alert=True)
+            return
+        
+        menu_item_check = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
+        if not menu_item_check:
+            await callback.answer("Блюдо недоступно в меню на эту дату", show_alert=True)
+            return
+        
         available_info = f"Доступно: {menu_item_check.available_quantity} порций"
         if already_in_cart > 0:
             available_info += f" (в корзине: {already_in_cart})"
@@ -441,7 +451,12 @@ async def callback_change_quantity(callback: CallbackQuery, state: FSMContext):
     
     async for session in get_session():
         dish = await get_dish_by_id(session, dish_id)
-        menu_item = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await callback.answer("Ошибка: кафе не выбрано", show_alert=True)
+            return
+        
+        menu_item = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
         
         if not dish or not menu_item:
             await callback.answer("Блюдо не найдено", show_alert=True)
@@ -529,7 +544,12 @@ async def callback_qty_manual(callback: CallbackQuery, state: FSMContext):
     
     async for session in get_session():
         dish = await get_dish_by_id(session, dish_id)
-        menu_item = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await callback.answer("Ошибка: кафе не выбрано", show_alert=True)
+            return
+        
+        menu_item = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
         
         if not dish or not menu_item:
             await callback.answer("Блюдо не найдено", show_alert=True)
@@ -588,9 +608,15 @@ async def process_manual_quantity(message: Message, state: FSMContext):
         return
     
     async for session in get_session():
-        from services.menu_service import get_dish_by_id, get_menu_item
+        from services.menu_service import get_dish_by_id
         dish = await get_dish_by_id(session, dish_id)
-        menu_item = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await message.answer("❌ Ошибка: кафе не выбрано. Начните заказ заново.")
+            await state.clear()
+            return
+        
+        menu_item = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
         
         if not dish or not menu_item:
             await message.answer("❌ Блюдо не найдено. Начните заказ заново.")
@@ -665,7 +691,12 @@ async def callback_confirm_dish(callback: CallbackQuery, state: FSMContext):
     
     async for session in get_session():
         dish = await get_dish_by_id(session, dish_id)
-        menu_item = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await callback.answer("Ошибка: кафе не выбрано", show_alert=True)
+            return
+        
+        menu_item = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
         
         if not dish or not menu_item:
             await callback.answer("Блюдо не найдено", show_alert=True)
@@ -856,7 +887,12 @@ async def callback_edit_cart_item(callback: CallbackQuery, state: FSMContext):
     
     async for session in get_session():
         dish = await get_dish_by_id(session, dish_id)
-        menu_item = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await callback.answer("Ошибка: кафе не выбрано", show_alert=True)
+            return
+        
+        menu_item = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
         
         if not dish or not menu_item:
             await callback.answer("Блюдо не найдено", show_alert=True)
@@ -917,7 +953,12 @@ async def callback_cart_edit_qty(callback: CallbackQuery, state: FSMContext):
     
     async for session in get_session():
         dish = await get_dish_by_id(session, dish_id)
-        menu_item = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await callback.answer("Ошибка: кафе не выбрано", show_alert=True)
+            return
+        
+        menu_item = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
         
         if not dish or not menu_item:
             await callback.answer("Блюдо не найдено", show_alert=True)
@@ -1019,9 +1060,15 @@ async def process_cart_item_manual_qty(message: Message, state: FSMContext):
         return
     
     async for session in get_session():
-        from services.menu_service import get_dish_by_id, get_menu_item
+        from services.menu_service import get_dish_by_id
         dish = await get_dish_by_id(session, dish_id)
-        menu_item = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await message.answer("❌ Ошибка: кафе не выбрано")
+            await state.clear()
+            return
+        
+        menu_item = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
         
         if not dish or not menu_item:
             await message.answer("❌ Блюдо не найдено")
@@ -1096,7 +1143,12 @@ async def callback_cart_item_save(callback: CallbackQuery, state: FSMContext):
     
     async for session in get_session():
         dish = await get_dish_by_id(session, dish_id)
-        menu_item = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await callback.answer("Ошибка: кафе не выбрано", show_alert=True)
+            return
+        
+        menu_item = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
         
         if not dish or not menu_item:
             await callback.answer("Блюдо не найдено", show_alert=True)
@@ -1104,6 +1156,7 @@ async def callback_cart_item_save(callback: CallbackQuery, state: FSMContext):
         
         # Проверка доступности
         # Находим старое количество в корзине
+        cart = data.get("cart", [])
         old_quantity = 0
         for item in cart:
             if item["dish_id"] == dish_id:
@@ -1167,7 +1220,12 @@ async def callback_cart_item_change_qty(callback: CallbackQuery, state: FSMConte
         return
     
     async for session in get_session():
-        menu_item = await get_menu_item(session, order_date, dish_id)
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await callback.answer("Ошибка: кафе не выбрано", show_alert=True)
+            return
+        
+        menu_item = await get_cafe_menu_item(session, cafe_id, order_date, dish_id)
         
         if not menu_item:
             await callback.answer("Блюдо не найдено", show_alert=True)
@@ -1279,9 +1337,15 @@ async def callback_finalize_order(callback: CallbackQuery, state: FSMContext):
     
     async for session in get_session():
         # Финальная проверка доступности всех блюд в корзине
+        cafe_id = data.get("cafe_id")
+        if not cafe_id:
+            await callback.answer("Ошибка: кафе не выбрано", show_alert=True)
+            await state.clear()
+            return
+        
         unavailable_items = []
         for item in cart:
-            menu_item = await get_menu_item(session, order_date, item["dish_id"])
+            menu_item = await get_cafe_menu_item(session, cafe_id, order_date, item["dish_id"])
             if not menu_item or menu_item.available_quantity < item["quantity"]:
                 dish = await get_dish_by_id(session, item["dish_id"])
                 dish_name = dish.name if dish else f"ID {item['dish_id']}"

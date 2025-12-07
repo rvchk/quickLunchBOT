@@ -70,6 +70,23 @@ async def get_cafe_menu_for_date(session: AsyncSession, cafe_id: int, date: date
     result = await session.execute(query)
     return list(result.scalars().all())
 
+async def get_cafe_menu_item(session: AsyncSession, cafe_id: int, date: datetime, dish_id: int) -> Optional[CafeMenu]:
+    """Получить элемент меню кафе для конкретного блюда на конкретную дату"""
+    date_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
+    date_end = date.replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    result = await session.execute(
+        select(CafeMenu).where(
+            and_(
+                CafeMenu.cafe_id == cafe_id,
+                CafeMenu.dish_id == dish_id,
+                CafeMenu.date >= date_start,
+                CafeMenu.date <= date_end
+            )
+        )
+    )
+    return result.scalar_one_or_none()
+
 async def load_cafe_menu_for_date(session: AsyncSession, cafe_id: int, date: datetime,
                                   dish_ids: List[int], quantities: List[int]) -> List[CafeMenu]:
     date_start = date.replace(hour=0, minute=0, second=0, microsecond=0)

@@ -10,7 +10,7 @@ from typing import List
 async def notify_admins_about_new_order(bot: Bot, order_info: str):
     async for session in get_session():
         result = await session.execute(
-            select(User).where(User.role == UserRole.ADMIN)
+            select(User).where(User.role == UserRole.MANAGER)
         )
         admins = list(result.scalars().all())
         
