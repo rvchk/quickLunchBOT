@@ -22,21 +22,21 @@ def format_order(order: Order) -> str:
     status = status_text.get(order.status.value, order.status.value)
     
     items_text = "\n".join([
-        f"  {i+1}️⃣ <b>{item.dish.name}</b>\n"
-        f"     {item.quantity} шт. × {item.price:.0f} ₽ = <b>{item.price * item.quantity:.0f} ₽</b>"
+        f"  {i+1}️ {item.dish.name}\n"
+        f"     {item.quantity} шт. × {item.price:.0f} ₽ = {item.price * item.quantity:.0f} ₽"
         for i, item in enumerate(order.items)
     ])
     
     return f"""
-📦 <b>Заказ #{order.id}</b>
+📦 Заказ #{order.id}
 
-📅 <b>Дата:</b> {order.order_date.strftime('%d.%m.%Y')}
-{emoji} <b>Статус:</b> {status}
+📅 Дата: {order.order_date.strftime('%d.%m.%Y')}
+{emoji} Статус: {status}
 
-🍽️ <b>Блюда в заказе:</b>
+🍽️ Блюда в заказе:
 {items_text}
 
-💰 <b>Итого к оплате:</b> {order.total_amount:.0f} ₽
+💰 Итого к оплате: {order.total_amount:.0f} ₽
     """
 
 def format_date(date: datetime) -> str:

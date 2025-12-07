@@ -71,7 +71,7 @@ async def get_cafe_menu_for_date(session: AsyncSession, cafe_id: int, date: date
     return list(result.scalars().all())
 
 async def get_cafe_menu_item(session: AsyncSession, cafe_id: int, date: datetime, dish_id: int) -> Optional[CafeMenu]:
-    """Получить элемент меню кафе для конкретного блюда на конкретную дату"""
+    """Получить элемент меню кафе по cafe_id, dish_id и date"""
     date_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
     date_end = date.replace(hour=23, minute=59, second=59, microsecond=999999)
     
